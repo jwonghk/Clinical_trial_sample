@@ -61,9 +61,9 @@ constraint = function(alpha0, alpha=0.025, r=0.5)
 ## the sum of the two alphas has to be equal to 0.025
 ## i,e. to allow for a type 1 error of 2.5% in the overall trial
 
-n=2000
-k=100
-T0=0.2
+n=200
+k=50
+T0=0.7
 N=n*k
 d=1.0
 
@@ -71,26 +71,33 @@ set.seed(20190312)
 alpha1<- runif(1, 0, 0.025)
 alpha2<- 0.025-alpha1
 alpha <- c(alpha1,alpha2)
-power_initial <- power1(3000,alpha1,alpha2)
+power_initial <- power1(3500,alpha1,alpha2)
 
 cons <- constraint(alpha)
 
 
-result <- c(alpha1, alpha2, power_initial, cons)
+result <- c(0,0, alpha1, alpha2, power_initial, cons)
+
+p0 <- power_initial
 for (i in c(1:k))
 {
-    for (j in c(1:m))
+  cat("this is the ",i,"th outer iteration","\t")
+    for (j in c(1:n))
     {
           
         
-        al <-runif(1,0,0.025)
+        a1 <-runif(1,0,0.025)
         a2 <- 0.025-a1
         
-        p_update <- power(3500, a1,a2)
+        p_update <- power1(3500, a1,a2)
+        
+        #cat("this is ", j, " iteration of ",i, "\t")
+       
         if (p_update > p0)
         {    alpha1 <- a1
              alpha2 <- a2
-             result = rbind(result, c(alpha1,alpha2, p_update))
+             constraint_satis <- constraint(c(alpha1, alpha2))
+             result = rbind(result, c(i, j, alpha1,alpha2, p_update, constraint_satis))
         }
         
         
@@ -99,10 +106,18 @@ for (i in c(1:k))
              if ( p < exp(-(p0-p_update)/T0))
              {
                
+              alpha1 <- a1
+              alpha2 <- a2
+              constraint_satis <- constraint(c(alpha1, alpha2))
+              result = rbind(result, c(i, j, alpha1,alpha2, p_update, constraint_satis))
              }
              
         }
         
     }
+  T0 = T0*0.9
 }    
 
+colnames(result) <- c("i", "j", "alpha 1", "alpha 2", "power", "constraint closeness")
+mm = length(result[,1])
+print(mm)
